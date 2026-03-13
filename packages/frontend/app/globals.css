@@ -24,75 +24,119 @@ body {
   background-color: var(--color-cream);
 }
 
-/* === Animated sakura petals === */
-.petal {
+/* === Sakura petal system === */
+.sakura-container {
   position: fixed;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
+  overflow: hidden;
 }
-.petal::before {
+
+.sakura-petal {
+  position: absolute;
+  top: -30px;
+}
+.sakura-petal::before {
   content: "";
   display: block;
-  width: 12px;
-  height: 12px;
   background: var(--color-primary);
   border-radius: 50% 0 50% 0;
-  opacity: 0.18;
+  opacity: 0.22;
 }
 
-/* Falling animation */
-.petal-fall {
-  animation: petal-drift linear infinite;
-  will-change: transform, opacity;
+/* Fall + sway combined animation */
+@keyframes sakura-fall {
+  0%   { transform: translateY(-30px) translateX(0) rotate(0deg) scale(1); opacity: 0; }
+  3%   { opacity: 1; }
+  25%  { transform: translateY(25vh) translateX(30px) rotate(90deg) scale(0.95); }
+  50%  { transform: translateY(50vh) translateX(-20px) rotate(180deg) scale(1.05); }
+  75%  { transform: translateY(75vh) translateX(40px) rotate(270deg) scale(0.9); }
+  97%  { opacity: 0.8; }
+  100% { transform: translateY(calc(100vh + 40px)) translateX(10px) rotate(360deg) scale(1); opacity: 0; }
 }
 
-.petal:nth-child(1) { left: 8%; animation-duration: 18s; animation-delay: 0s; }
-.petal:nth-child(2) { left: 22%; animation-duration: 22s; animation-delay: -4s; }
-.petal:nth-child(3) { left: 38%; animation-duration: 20s; animation-delay: -8s; }
-.petal:nth-child(4) { left: 55%; animation-duration: 24s; animation-delay: -2s; }
-.petal:nth-child(5) { left: 68%; animation-duration: 19s; animation-delay: -12s; }
-.petal:nth-child(6) { left: 80%; animation-duration: 21s; animation-delay: -6s; }
-.petal:nth-child(7) { left: 92%; animation-duration: 23s; animation-delay: -10s; }
-.petal:nth-child(8) { left: 48%; animation-duration: 17s; animation-delay: -15s; }
-
-.petal:nth-child(2)::before,
-.petal:nth-child(5)::before,
-.petal:nth-child(8)::before {
-  width: 8px;
-  height: 8px;
-  opacity: 0.12;
+@keyframes sakura-fall-alt {
+  0%   { transform: translateY(-30px) translateX(0) rotate(0deg); opacity: 0; }
+  3%   { opacity: 1; }
+  25%  { transform: translateY(25vh) translateX(-25px) rotate(-80deg); }
+  50%  { transform: translateY(50vh) translateX(35px) rotate(-170deg); }
+  75%  { transform: translateY(75vh) translateX(-15px) rotate(-260deg); }
+  97%  { opacity: 0.7; }
+  100% { transform: translateY(calc(100vh + 40px)) translateX(20px) rotate(-360deg); opacity: 0; }
 }
 
-@keyframes petal-drift {
-  0% {
-    transform: translateY(-20px) translateX(0) rotate(0deg);
-    opacity: 0;
-  }
-  5% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(calc(100vh + 20px)) translateX(80px) rotate(360deg);
-    opacity: 0;
-  }
+@keyframes sakura-fall-lazy {
+  0%   { transform: translateY(-30px) translateX(0) rotate(15deg); opacity: 0; }
+  4%   { opacity: 1; }
+  30%  { transform: translateY(30vh) translateX(50px) rotate(100deg); }
+  60%  { transform: translateY(60vh) translateX(-10px) rotate(200deg); }
+  95%  { opacity: 0.6; }
+  100% { transform: translateY(calc(100vh + 40px)) translateX(30px) rotate(330deg); opacity: 0; }
 }
+
+/* 20 petals with varied sizes, positions, speeds, and delays */
+.sakura-petal-0  { left: 3%;  animation: sakura-fall 16s linear infinite; animation-delay: 0s; }
+.sakura-petal-0::before  { width: 12px; height: 12px; }
+.sakura-petal-1  { left: 10%; animation: sakura-fall-alt 20s linear infinite; animation-delay: -3s; }
+.sakura-petal-1::before  { width: 8px; height: 8px; opacity: 0.15; }
+.sakura-petal-2  { left: 18%; animation: sakura-fall-lazy 24s linear infinite; animation-delay: -7s; }
+.sakura-petal-2::before  { width: 14px; height: 14px; opacity: 0.18; }
+.sakura-petal-3  { left: 25%; animation: sakura-fall 19s linear infinite; animation-delay: -11s; }
+.sakura-petal-3::before  { width: 10px; height: 10px; }
+.sakura-petal-4  { left: 32%; animation: sakura-fall-alt 22s linear infinite; animation-delay: -1s; }
+.sakura-petal-4::before  { width: 7px; height: 7px; opacity: 0.12; }
+.sakura-petal-5  { left: 40%; animation: sakura-fall 17s linear infinite; animation-delay: -14s; }
+.sakura-petal-5::before  { width: 11px; height: 11px; opacity: 0.2; }
+.sakura-petal-6  { left: 47%; animation: sakura-fall-lazy 25s linear infinite; animation-delay: -5s; }
+.sakura-petal-6::before  { width: 9px; height: 9px; }
+.sakura-petal-7  { left: 53%; animation: sakura-fall-alt 18s linear infinite; animation-delay: -9s; }
+.sakura-petal-7::before  { width: 13px; height: 13px; opacity: 0.16; }
+.sakura-petal-8  { left: 60%; animation: sakura-fall 21s linear infinite; animation-delay: -16s; }
+.sakura-petal-8::before  { width: 8px; height: 8px; opacity: 0.14; }
+.sakura-petal-9  { left: 67%; animation: sakura-fall-lazy 23s linear infinite; animation-delay: -2s; }
+.sakura-petal-9::before  { width: 12px; height: 12px; }
+.sakura-petal-10 { left: 73%; animation: sakura-fall-alt 19s linear infinite; animation-delay: -8s; }
+.sakura-petal-10::before { width: 6px; height: 6px; opacity: 0.1; }
+.sakura-petal-11 { left: 78%; animation: sakura-fall 26s linear infinite; animation-delay: -12s; }
+.sakura-petal-11::before { width: 15px; height: 15px; opacity: 0.13; }
+.sakura-petal-12 { left: 84%; animation: sakura-fall-lazy 20s linear infinite; animation-delay: -6s; }
+.sakura-petal-12::before { width: 10px; height: 10px; }
+.sakura-petal-13 { left: 90%; animation: sakura-fall 18s linear infinite; animation-delay: -15s; }
+.sakura-petal-13::before { width: 9px; height: 9px; opacity: 0.17; }
+.sakura-petal-14 { left: 95%; animation: sakura-fall-alt 22s linear infinite; animation-delay: -4s; }
+.sakura-petal-14::before { width: 11px; height: 11px; }
+.sakura-petal-15 { left: 15%; animation: sakura-fall 27s linear infinite; animation-delay: -18s; }
+.sakura-petal-15::before { width: 7px; height: 7px; opacity: 0.11; }
+.sakura-petal-16 { left: 35%; animation: sakura-fall-alt 15s linear infinite; animation-delay: -10s; }
+.sakura-petal-16::before { width: 13px; height: 13px; opacity: 0.2; }
+.sakura-petal-17 { left: 55%; animation: sakura-fall-lazy 21s linear infinite; animation-delay: -13s; }
+.sakura-petal-17::before { width: 8px; height: 8px; opacity: 0.15; }
+.sakura-petal-18 { left: 70%; animation: sakura-fall 24s linear infinite; animation-delay: -7s; }
+.sakura-petal-18::before { width: 10px; height: 10px; }
+.sakura-petal-19 { left: 88%; animation: sakura-fall-alt 17s linear infinite; animation-delay: -19s; }
+.sakura-petal-19::before { width: 14px; height: 14px; opacity: 0.16; }
 
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-  .petal-fall {
-    animation: none;
+  .sakura-petal {
+    animation: none !important;
+    opacity: 0.08;
   }
-  .petal {
-    opacity: 0.1;
+  .sakura-petal-0  { top: 5%; }
+  .sakura-petal-3  { top: 15%; }
+  .sakura-petal-5  { top: 30%; }
+  .sakura-petal-7  { top: 45%; }
+  .sakura-petal-9  { top: 55%; }
+  .sakura-petal-11 { top: 70%; }
+  .sakura-petal-13 { top: 80%; }
+  .sakura-petal-16 { top: 90%; }
+  /* Hide the rest to keep it minimal */
+  .sakura-petal-1, .sakura-petal-2, .sakura-petal-4, .sakura-petal-6,
+  .sakura-petal-8, .sakura-petal-10, .sakura-petal-12, .sakura-petal-14,
+  .sakura-petal-15, .sakura-petal-17, .sakura-petal-18, .sakura-petal-19 {
+    display: none;
   }
-  .petal:nth-child(1) { top: 8%; }
-  .petal:nth-child(2) { top: 20%; }
-  .petal:nth-child(3) { top: 35%; }
-  .petal:nth-child(4) { top: 50%; }
-  .petal:nth-child(5) { top: 65%; }
-  .petal:nth-child(6) { top: 78%; }
-  .petal:nth-child(7) { top: 88%; }
-  .petal:nth-child(8) { top: 42%; }
 
   .card-decorated,
   .status-bubble,

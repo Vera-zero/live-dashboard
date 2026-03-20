@@ -776,11 +776,7 @@ export function getAppDescription(appName: string, displayTitle?: string, music?
     }
   }
 
-  // If music is playing in background (non-music app foreground), combine descriptions
-  if (music?.title && !isMusicAppForeground) {
-    const songLabel = music.artist ? `${music.artist}「${music.title}」` : `「${music.title}」`;
-    return `${base.replace(/喵~$/, "")}，一边听${songLabel}喵~`;
-  }
+  // Music info is shown via the ♪ line in CurrentStatus, so no need to embed it in description
 
   return base;
 }

@@ -374,6 +374,13 @@ for (const [key, value] of Object.entries(descriptions)) {
   lowerIndex.set(key.toLowerCase(), value);
 }
 
+// Music app names (lowercase) — used to avoid duplicate music info in descriptions
+const _musicAppNames = new Set([
+  "spotify", "网易云音乐", "qq音乐", "酷狗音乐", "apple music",
+  "foobar2000", "youtube music", "酷我音乐", "amazon music", "aimp",
+  "musicbee", "vlc", "potplayer", "windows media player",
+]);
+
 // ── Display title templates by app category ──
 // When displayTitle is available, use a richer template with the title embedded.
 
@@ -734,25 +741,47 @@ registerTemplate(
   (t) => `正在用Vivaldi看「${t}」喵~`
 );
 
-export function getAppDescription(appName: string, displayTitle?: string): string {
+export function getAppDescription(appName: string, displayTitle?: string, music?: { title?: string; artist?: string; app?: string }): string {
   if (!appName) return DEFAULT_DESCRIPTION;
+
+  // Base description (with or without display title)
+  let base: string | undefined;
 
   // If we have a display_title, try to use a rich template
   if (displayTitle) {
     const template = titleTemplates.get(appName.toLowerCase());
     if (template) {
-      return template(displayTitle);
+      base = template(displayTitle);
     }
   }
 
-  // Known app without template → use generic description
-  const desc = lowerIndex.get(appName.toLowerCase());
-  if (desc) return desc;
-
-  // Unknown app with a display title → show it (games, galgame, etc.)
-  if (displayTitle) {
-    return `正在玩「${displayTitle}」喵~`;
+  if (!base) {
+    // Known app without template → use generic description
+    const desc = lowerIndex.get(appName.toLowerCase());
+    if (desc) {
+      base = desc;
+    }
   }
 
-  return DEFAULT_DESCRIPTION;
+  if (!base) {
+    // Unknown app with a display title → show it
+    if (displayTitle) {
+      base = `正在玩「${displayTitle}」喵~`;
+    } else {
+      base = DEFAULT_DESCRIPTION;
+    }
+  }
+
+  // If music is playing in background, combine with the app description
+  if (music?.title) {
+    const songLabel = music.artist ? `${music.artist}「${music.title}」` : `「${music.title}」`;
+    // Don't duplicate if the base description already mentions the song (music app is foreground)
+    const appLower = appName.toLowerCase();
+    const isMusicAppForeground = _musicAppNames.has(appLower);
+    if (!isMusicAppForeground) {
+      return `${base.replace(/喵~$/, "")}，一边听${songLabel}喵~`;
+    }
+  }
+
+  return base;
 }

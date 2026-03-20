@@ -9,11 +9,14 @@ Permissions:
   System Preferences → Privacy & Security → Accessibility → add Terminal (or your terminal app)
 """
 
+import ipaddress
 import json
 import logging
+import socket
 import subprocess
 import sys
 import time
+import urllib.parse
 from pathlib import Path
 
 import psutil
@@ -91,6 +94,127 @@ def get_battery_extra() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Music detection via AppleScript
+# ---------------------------------------------------------------------------
+_MUSIC_APPS = {
+    "Spotify": """\
+tell application "System Events"
+    if not (exists process "Spotify") then return "NOT_RUNNING"
+end tell
+tell application "Spotify"
+    if player state is not playing then return "NOT_PLAYING"
+    set t to name of current track
+    set a to artist of current track
+    return t & "|SEP|" & a
+end tell""",
+    "Music": """\
+tell application "System Events"
+    if not (exists process "Music") then return "NOT_RUNNING"
+end tell
+tell application "Music"
+    if player state is not playing then return "NOT_PLAYING"
+    set t to name of current track
+    set a to artist of current track
+    return t & "|SEP|" & a
+end tell""",
+    "QQ音乐": """\
+tell application "System Events"
+    if not (exists process "QQMusic") then return "NOT_RUNNING"
+    tell process "QQMusic"
+        set t to title of front window
+    end tell
+    return t
+end tell""",
+    "网易云音乐": """\
+tell application "System Events"
+    if not (exists process "NeteaseMusic") then return "NOT_RUNNING"
+    tell process "NeteaseMusic"
+        set t to title of front window
+    end tell
+    return t
+end tell""",
+}
+
+
+def get_music_info() -> dict | None:
+    """Query known music apps via AppleScript to find now-playing info."""
+    for app_name, script in _MUSIC_APPS.items():
+        try:
+            result = subprocess.run(
+                ["osascript", "-e", script],
+                capture_output=True, text=True, timeout=3,
+            )
+            if result.returncode != 0:
+                continue
+            output = result.stdout.strip()
+            if output in ("NOT_RUNNING", "NOT_PLAYING", ""):
+                continue
+
+            info: dict[str, str] = {"app": app_name}
+            if "|SEP|" in output:
+                title, artist = output.split("|SEP|", 1)
+                if title.strip():
+                    info["title"] = title.strip()[:256]
+                if artist.strip():
+                    info["artist"] = artist.strip()[:256]
+            else:
+                # Window-title-only apps (QQ音乐, 网易云)
+                if " - " in output:
+                    song, artist = output.split(" - ", 1)
+                    info["title"] = song.strip()[:256]
+                    info["artist"] = artist.strip()[:256]
+                else:
+                    info["title"] = output[:256]
+            return info
+        except (subprocess.TimeoutExpired, Exception):
+            continue
+    return None
+
+
+# ---------------------------------------------------------------------------
+# URL security validation
+# ---------------------------------------------------------------------------
+def validate_server_url(url: str) -> None:
+    """Validate server_url security: HTTPS always allowed, HTTP only for private networks."""
+    parsed = urllib.parse.urlparse(url)
+    scheme = parsed.scheme.lower()
+    hostname = parsed.hostname
+
+    if scheme not in ("http", "https"):
+        log.error("server_url must use http:// or https://")
+        sys.exit(1)
+
+    if not hostname:
+        log.error("server_url has no valid hostname")
+        sys.exit(1)
+
+    # HTTPS is always safe (token encrypted in transit)
+    if scheme == "https":
+        return
+
+    # HTTP — resolve hostname and check ALL IPs are private
+    try:
+        addrinfos = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    except socket.gaierror as e:
+        log.error("Cannot resolve hostname: %s", e)
+        sys.exit(1)
+
+    ips = {info[4][0] for info in addrinfos}
+    for ip_str in ips:
+        ip = ipaddress.ip_address(ip_str)
+        if ip.is_global:
+            log.error(
+                "HTTP refused: hostname resolves to public IP. Use HTTPS for public servers.",
+            )
+            sys.exit(1)
+
+    log.warning(
+        "HTTP allowed for private network (%s). Token sent in plaintext!",
+        hostname,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 def load_config() -> dict:
@@ -119,10 +243,7 @@ def load_config() -> dict:
             log.error("config.json: '%s' is not set", key)
             sys.exit(1)
 
-    url: str = cfg["server_url"]
-    if not url.startswith("http://") and not url.startswith("https://"):
-        log.error("config.json: 'server_url' must start with http:// or https:// (got %s)", url)
-        sys.exit(1)
+    validate_server_url(cfg["server_url"])
 
     for key, default, lo, hi in [
         ("interval_seconds", 5, 1, 300),
@@ -235,6 +356,9 @@ def main() -> None:
 
             if changed or heartbeat_due:
                 extra = get_battery_extra()
+                music = get_music_info()
+                if music:
+                    extra["music"] = music
                 success = reporter.send(app_id, title, extra)
                 if success:
                     prev_app = app_id

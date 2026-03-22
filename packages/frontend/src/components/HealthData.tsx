@@ -209,14 +209,14 @@ function formatValue(value: number, type: string): string {
   return value.toFixed(1);
 }
 
-// Pure SVG heart rate chart
+// Pure SVG heart rate chart — responsive full-width
 function HeartRateChart({ points }: { points: { time: Date; value: number }[] }) {
   if (points.length < 2) return null;
 
-  const width = 280;
-  const height = 60;
-  const padX = 28;
-  const padY = 4;
+  const width = 600;
+  const height = 120;
+  const padX = 36;
+  const padY = 8;
 
   const minVal = Math.min(...points.map((p) => p.value)) - 5;
   const maxVal = Math.max(...points.map((p) => p.value)) + 5;
@@ -244,7 +244,6 @@ function HeartRateChart({ points }: { points: { time: Date; value: number }[] })
     <svg
       viewBox={`0 0 ${width} ${height + 14}`}
       className="w-full"
-      style={{ maxWidth: width }}
     >
       {/* Grid lines */}
       <line x1={padX} y1={padY} x2={padX} y2={height} stroke="var(--color-border)" strokeWidth="0.5" />
@@ -265,9 +264,9 @@ function HeartRateChart({ points }: { points: { time: Date; value: number }[] })
         <text
           key={i}
           x={lt.x}
-          y={height + 11}
+          y={height + 12}
           textAnchor="middle"
-          fontSize="7"
+          fontSize="10"
           fill="var(--color-text-muted)"
           fontFamily="JetBrains Mono, monospace"
         >
@@ -276,10 +275,10 @@ function HeartRateChart({ points }: { points: { time: Date; value: number }[] })
       ))}
 
       {/* Min/max labels */}
-      <text x={padX - 2} y={padY + 4} textAnchor="end" fontSize="7" fill="var(--color-text-muted)" fontFamily="JetBrains Mono, monospace">
+      <text x={padX - 3} y={padY + 6} textAnchor="end" fontSize="10" fill="var(--color-text-muted)" fontFamily="JetBrains Mono, monospace">
         {Math.round(maxVal)}
       </text>
-      <text x={padX - 2} y={height} textAnchor="end" fontSize="7" fill="var(--color-text-muted)" fontFamily="JetBrains Mono, monospace">
+      <text x={padX - 3} y={height} textAnchor="end" fontSize="10" fill="var(--color-text-muted)" fontFamily="JetBrains Mono, monospace">
         {Math.round(minVal)}
       </text>
     </svg>
